@@ -36,6 +36,7 @@ func InitPeerClient(ctx context.Context, cfg Config, discovery *Discovery) (*Cli
 	}
 
 	client.peer = p2pClient
+	return client, nil
 }
 
 func (c *Client) InitP2P() (*model.Peer, error) {
