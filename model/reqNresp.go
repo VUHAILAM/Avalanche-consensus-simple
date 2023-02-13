@@ -11,3 +11,8 @@ type RegisterPeerResponse struct {
 type GetBlockDataByIndexRequest struct {
 	Index int `json:"index"`
 }
+
+type GetBlockDataFromPeerRequest struct {
+	Index int   `json:"index"`
+	Peer  *Peer `json:"peer"`
+}

@@ -38,10 +38,10 @@ func (d *Discovery) Router() {
 	d.ginR.GET("/peers", d.GetPeers)
 }
 
-func (d *Discovery) RegisterPeer(c *gin.Context) {
+func (d *Discovery) RegisterPeer(ginCtx *gin.Context) {
 	var req model.RegisterPeerRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(400, nil)
+	if err := ginCtx.ShouldBindJSON(&req); err != nil {
+		ginCtx.JSON(400, nil)
 	}
 	isAvailablePeer := true
 	for _, peer := range d.Peers {
@@ -52,13 +52,13 @@ func (d *Discovery) RegisterPeer(c *gin.Context) {
 	if isAvailablePeer {
 		d.Peers = append(d.Peers, req.Peer)
 	}
-	c.JSON(200, model.RegisterPeerResponse{
+	ginCtx.JSON(200, model.RegisterPeerResponse{
 		Peers: d.Peers,
 	})
 }
 
-func (d *Discovery) GetPeers(c *gin.Context) {
-	c.JSON(200, map[string]interface{}{
+func (d *Discovery) GetPeers(ginCtx *gin.Context) {
+	ginCtx.JSON(200, map[string]interface{}{
 		"peers": d.Peers,
 	})
 }
