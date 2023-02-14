@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	DiscoveryHost = "0.0.0.0"
+	DiscoveryHost = "127.0.0.1"
 	DiscoveryPort = 8080
 )
 

@@ -4,11 +4,11 @@ import "errors"
 
 type Config struct {
 	//K is sample size
-	K int `json:"k"`
+	K int `json:"k" mapstructure:"K"`
 	//Alphal is quorum size
-	Alphal int `json:"alphal"`
+	Alphal int `json:"alphal" mapstructure:"ALPHAL"`
 	//Beta is decision threshold
-	Beta int `json:"beta"`
+	Beta int `json:"beta" mapstructure:"BETA"`
 }
 
 func (c *Config) Verify() error {

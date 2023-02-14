@@ -26,8 +26,11 @@ type Blockchain struct {
 	mu            sync.Mutex
 }
 
-func InitBlockchain(ctx context.Context, p2pConfig p2pnetworking.Config, discovery *p2pnetworking.Discovery) (*Blockchain, error) {
-	blockchain := &Blockchain{}
+func InitBlockchain(ctx context.Context, p2pConfig p2pnetworking.Config, snowballConf consensus.Config, discovery *p2pnetworking.Discovery) (*Blockchain, error) {
+	blockchain := &Blockchain{
+		P2pConfig:     p2pConfig,
+		SnowbalConfig: snowballConf,
+	}
 	blockchain.Blocks = make([]*Block, 0)
 
 	getDataCallback := func(index int) (DataType, error) {
