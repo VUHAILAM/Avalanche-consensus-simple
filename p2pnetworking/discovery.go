@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/gin-gonic/gin"
 	"github.com/go-resty/resty/v2"
 )
@@ -22,13 +24,12 @@ type Discovery struct {
 	restyClient *resty.Client
 }
 
-func InitDiscovery() *Discovery {
-	ginEng := gin.Default()
+func InitDiscovery(r *gin.Engine) *Discovery {
 	address := fmt.Sprintf("%s:%d", DiscoveryHost, DiscoveryPort)
 	return &Discovery{
 		Address:     address,
 		Peers:       make([]*model.Peer, 0),
-		ginR:        ginEng,
+		ginR:        r,
 		restyClient: resty.New(),
 	}
 }
@@ -41,6 +42,7 @@ func (d *Discovery) Router() {
 func (d *Discovery) RegisterPeer(ginCtx *gin.Context) {
 	var req model.RegisterPeerRequest
 	if err := ginCtx.ShouldBindJSON(&req); err != nil {
+		logrus.Error("Can not bind json", err)
 		ginCtx.JSON(400, nil)
 	}
 	isAvailablePeer := true
@@ -64,7 +66,7 @@ func (d *Discovery) GetPeers(ginCtx *gin.Context) {
 }
 
 func (d *Discovery) HealthCheckPeers() error {
-	fmt.Println("healthy check start")
+	logrus.Infoln("healthy check start")
 	var wg sync.WaitGroup
 	peers := make([]*model.Peer, 0)
 

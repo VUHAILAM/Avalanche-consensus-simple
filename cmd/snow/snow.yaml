@@ -1,0 +1,10 @@
+p2p:
+  name: "avalanche-consensus"
+  protocolId: "avalanche-consensus/1.0.0"
+  host: "127.0.0.1"
+consensus:
+  k: 3
+  alphal: 2
+  beta: 2
+numberOfNode: 10
+numberOfBlock: 4

@@ -1,8 +1,8 @@
 package p2pnetworking
 
 type Config struct {
-	Name       string `json:"name" mapstructure:"NAME"`
-	ProtocolID string `json:"protocol_id" mapstructure:"PROTOCOL_ID"`
-	Host       string `json:"host" mapstructure:"HOST"`
-	Port       int    `json:"port" mapstructure:"PORT"`
+	Name       string `yaml:"name" mapstructure:"name" default:"avalanche-consensus"`
+	ProtocolID string `yaml:"protocolId" mapstructure:"protocolId" default:"avalanche-consensus/1.0.0"`
+	Host       string `yaml:"host" mapstructure:"host" default:"127.0.0.1"`
+	Port       int    `yaml:"port" mapstructure:"port"`
 }

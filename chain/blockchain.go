@@ -14,7 +14,7 @@ type Chain interface {
 	Length() int
 	Get(int) (*Block, error)
 	Add(*Block) error
-	Set(int, DataType) error
+	Set(int, model.DataType) error
 }
 
 type Blockchain struct {
@@ -33,7 +33,7 @@ func InitBlockchain(ctx context.Context, p2pConfig p2pnetworking.Config, snowbal
 	}
 	blockchain.Blocks = make([]*Block, 0)
 
-	getDataCallback := func(index int) (DataType, error) {
+	getDataCallback := func(index int) (model.DataType, error) {
 		return blockchain.GetBlockData(index)
 	}
 
@@ -64,7 +64,7 @@ func (b *Blockchain) Get(index int) (*Block, error) {
 	return b.Blocks[index], nil
 }
 
-func (b *Blockchain) Set(index int, data DataType) error {
+func (b *Blockchain) Set(index int, data model.DataType) error {
 	dataBlock, err := b.Get(index)
 	if err != nil {
 		return err
@@ -77,7 +77,7 @@ func (b *Blockchain) Set(index int, data DataType) error {
 	return nil
 }
 
-func (b *Blockchain) GetBlockData(index int) (DataType, error) {
+func (b *Blockchain) GetBlockData(index int) (model.DataType, error) {
 	dataBlock, err := b.Get(index)
 	if err != nil {
 		return -1, err
@@ -86,7 +86,7 @@ func (b *Blockchain) GetBlockData(index int) (DataType, error) {
 	return dataBlock.Data, nil
 }
 
-func (b *Blockchain) GetBlockDataFromPeer(ctx context.Context, peer *model.Peer, index int) (DataType, error) {
+func (b *Blockchain) GetBlockDataFromPeer(ctx context.Context, peer *model.Peer, index int) (model.DataType, error) {
 	req := model.GetBlockDataFromPeerRequest{
 		Peer:  peer,
 		Index: index,
@@ -99,14 +99,14 @@ func (b *Blockchain) GetBlockDataFromPeer(ctx context.Context, peer *model.Peer,
 	return data, nil
 }
 
-func (b *Blockchain) GetDataFromKRandomBlock(ctx context.Context, index int, k int) ([]DataType, error) {
+func (b *Blockchain) GetDataFromKRandomBlock(ctx context.Context, index int, k int) ([]model.DataType, error) {
 	peers, err := b.PeerClient.Peers()
 	if err != nil {
 		return nil, err
 	}
 
 	lenPeers := len(peers)
-	preferencesFromPeers := make([]DataType, 0)
+	preferencesFromPeers := make([]model.DataType, 0)
 
 	cnt := 0
 	for _, i := range rand.Perm(lenPeers) {
@@ -139,8 +139,13 @@ func (b *Blockchain) Sync(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-
-		err = snowballConsensus.Run(ctx, i, b)
+		getKDataCb := func(k int) ([]model.DataType, error) {
+			return b.GetDataFromKRandomBlock(ctx, i, k)
+		}
+		setDataCb := func(data model.DataType) error {
+			return block.SetData(data)
+		}
+		err = snowballConsensus.Run(ctx, setDataCb, getKDataCb)
 		if err != nil {
 			return err
 		}

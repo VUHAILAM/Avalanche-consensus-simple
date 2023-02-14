@@ -1,14 +1,14 @@
 package chain
 
-type DataType int
+import "avalanche-consensus/model"
 
 type Block struct {
-	Data      DataType `json:"data"`
-	Hash      []byte   `json:"hash"`
-	Timestamp int64    `json:"timestamp"`
+	Data      model.DataType `json:"data"`
+	Hash      []byte         `json:"hash"`
+	Timestamp int64          `json:"timestamp"`
 }
 
-func (b *Block) SetData(data DataType) error {
+func (b *Block) SetData(data model.DataType) error {
 	b.Data = data
 	return nil
 }

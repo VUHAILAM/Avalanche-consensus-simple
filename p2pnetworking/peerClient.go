@@ -1,14 +1,14 @@
 package p2pnetworking
 
 import (
-	"avalanche-consensus/chain"
 	"avalanche-consensus/model"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"strconv"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-resty/resty/v2"
@@ -21,15 +21,16 @@ type Client struct {
 	ginR                 *gin.Engine
 	discovery            *Discovery
 	resty                *resty.Client
-	getBlockDataCallback func(int) (chain.DataType, error)
+	getBlockDataCallback func(int) (model.DataType, error)
 }
 
 func InitPeerClient(
 	ctx context.Context,
 	cfg Config, discovery *Discovery,
-	getBlockDataCb func(int) (chain.DataType, error),
+	getBlockDataCb func(int) (model.DataType, error),
 ) (*Client, error) {
 	r := gin.Default()
+	gin.SetMode(gin.ReleaseMode)
 	client := &Client{
 		conf:                 cfg,
 		ginR:                 r,
@@ -38,17 +39,21 @@ func InitPeerClient(
 		getBlockDataCallback: getBlockDataCb,
 	}
 
-	p2pClient, err := client.InitP2P()
+	peer, err := client.InitP2P()
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("unable to start the client with host: %s, port: %d", cfg.Host, cfg.Port))
 	}
 
-	client.peer = p2pClient
+	client.peer = peer
+	logrus.Infof("Init P2P Client successfully, host: %s, port: %d", cfg.Host, cfg.Port)
 
-	err = client.RegisterDiscovery(ctx, p2pClient)
+	client.Router()
+
+	err = client.RegisterDiscovery(ctx, peer)
 	if err != nil {
 		return nil, err
 	}
+	logrus.Infof("Register done, host: %s, port: %d", cfg.Host, cfg.Port)
 	return client, nil
 }
 
@@ -61,7 +66,7 @@ func (c *Client) InitP2P() (*model.Peer, error) {
 	go func() {
 		err := c.ginR.Run(address)
 		if err != nil {
-			log.Fatal(err)
+			logrus.Fatal(err)
 		}
 	}()
 	return p, nil
@@ -77,17 +82,14 @@ func (c *Client) Health(ginCtx *gin.Context) {
 }
 
 func (c *Client) RegisterDiscovery(ctx context.Context, peer *model.Peer) error {
-	resp, err := c.resty.R().SetBody(map[string]interface{}{
+	_, err := c.resty.R().SetBody(map[string]interface{}{
 		"peer": peer,
 	}).Post(fmt.Sprintf("http://%s/register-peer", c.discovery.Address))
 	if err != nil {
+		logrus.Error(err)
 		return err
 	}
-	response := model.RegisterPeerResponse{}
-	err = json.Unmarshal(resp.Body(), &response)
-	if err != nil {
-		return err
-	}
+
 	return nil
 }
 
@@ -106,7 +108,7 @@ func (c *Client) GetBlockDataByIndex(ginCtx *gin.Context) {
 	ginCtx.JSON(200, blockData)
 }
 
-func (c *Client) GetBlockDataFromPeer(ctx context.Context, req model.GetBlockDataFromPeerRequest) (chain.DataType, error) {
+func (c *Client) GetBlockDataFromPeer(ctx context.Context, req model.GetBlockDataFromPeerRequest) (model.DataType, error) {
 	resp, err := c.resty.R().SetBody(req).Post(fmt.Sprintf("http://%s/get-data-by-index", req.Peer.Address))
 	if err != nil {
 		return -1, err
@@ -115,7 +117,7 @@ func (c *Client) GetBlockDataFromPeer(ctx context.Context, req model.GetBlockDat
 	if err != nil {
 		return -1, err
 	}
-	return chain.DataType(data), nil
+	return model.DataType(data), nil
 }
 
 func (c *Client) Peers() ([]*model.Peer, error) {
@@ -128,6 +130,7 @@ func (c *Client) Peers() ([]*model.Peer, error) {
 	}
 	err = json.Unmarshal(resp.Body(), &response)
 	if err != nil {
+		logrus.Error(err)
 		return nil, err
 	}
 
