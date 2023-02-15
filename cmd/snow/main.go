@@ -1,6 +1,7 @@
 package main
 
 import (
+	"avalanche-consensus/api"
 	"avalanche-consensus/chain"
 	"avalanche-consensus/consensus"
 	"avalanche-consensus/model"
@@ -26,6 +27,7 @@ func main() {
 	Logger = logrus.New()
 	Logger.SetLevel(logrus.DebugLevel)
 	Logger.SetFormatter(&logrus.JSONFormatter{})
+
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
@@ -35,25 +37,11 @@ func main() {
 	}
 	time.Sleep(2 * time.Second)
 
-	healthyPeersTicker := time.NewTicker(1 * time.Minute)
-	go func() {
-		for {
-			select {
-			case <-sigs:
-				return
-			case <-healthyPeersTicker.C:
-				err := discovery.HealthCheckPeers()
-				if err != nil {
-					Logger.Fatal(err)
-				}
-			}
-		}
-	}()
-
 	config, err := LoadConfig(".")
 	if err != nil {
 		Logger.Info(err)
 	}
+	api.InitApp(discovery, config.P2p, config.Consensus, config.NumberOfBlock, config.AppAddress)
 	var wg sync.WaitGroup
 
 	for i := 0; i < config.NumberOfNode; i++ {
@@ -61,6 +49,7 @@ func main() {
 		go SetupNode(&wg, sigs, i, discovery, config)
 	}
 	wg.Wait()
+
 }
 
 func SetupNode(wg *sync.WaitGroup, sigs chan os.Signal, i int, discovery *p2pnetworking.Discovery, conf *SnowConfig) {
@@ -73,7 +62,6 @@ func SetupNode(wg *sync.WaitGroup, sigs chan os.Signal, i int, discovery *p2pnet
 		<-sigs
 		doneChan <- true
 	}()
-
 	ctx := context.Background()
 	freePort, err := freeport.GetFreePort()
 	if err != nil {
@@ -115,14 +103,15 @@ func SetupNode(wg *sync.WaitGroup, sigs chan os.Signal, i int, discovery *p2pnet
 	}
 
 	Logger.Infof("client: %d, block: %s", i, blockChainState)
-
+	<-doneChan
 }
 
 type SnowConfig struct {
 	P2p           p2pnetworking.Config `yaml:"p2p" mapstructure:"p2p"`
 	Consensus     consensus.Config     `yaml:"consensus" mapstructure:"consensus"`
-	NumberOfNode  int                  `yaml:"numberOfNode" mapstructure:"numberOfNode" default:"10"`
-	NumberOfBlock int                  `yaml:"numberOfBlock" mapstructure:"numberOfBlock" default:"4"`
+	NumberOfNode  int                  `yaml:"numberOfNode" mapstructure:"numberOfNode"`
+	NumberOfBlock int                  `yaml:"numberOfBlock" mapstructure:"numberOfBlock"`
+	AppAddress    string               `yaml:"appAddress" mapstructure:"appAddress"`
 }
 
 func LoadConfig(path string) (*SnowConfig, error) {
@@ -165,6 +154,7 @@ func viperDeafault() {
 	viper.SetDefault("consensus.k", "3")
 	viper.SetDefault("consensus.alphal", "2")
 	viper.SetDefault("consensus.beta", "10")
-	viper.SetDefault("numberOfNode", "10")
+	viper.SetDefault("numberOfNode", "200")
 	viper.SetDefault("numberOfBlock", "4")
+	viper.SetDefault("appAddress", "127.0.0.1:8080")
 }

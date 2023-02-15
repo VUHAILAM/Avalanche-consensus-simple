@@ -13,7 +13,7 @@ import (
 
 const (
 	DiscoveryHost = "127.0.0.1"
-	DiscoveryPort = 8080
+	DiscoveryPort = 80
 )
 
 type Discovery struct {
@@ -79,6 +79,7 @@ func (d *Discovery) HealthCheckPeers() error {
 				return
 			}
 			peers = append(peers, p)
+			logrus.Infof(fmt.Sprintf("Peer address: %s still ok", p.Address))
 		}()
 	}
 	wg.Wait()

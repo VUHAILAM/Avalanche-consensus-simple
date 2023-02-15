@@ -78,7 +78,7 @@ func (c *Client) Router() {
 }
 
 func (c *Client) Health(ginCtx *gin.Context) {
-	ginCtx.JSON(200, "ok")
+	ginCtx.JSON(200, fmt.Sprintf("Peer address: %s still ok", c.peer.Address))
 }
 
 func (c *Client) RegisterDiscovery(ctx context.Context, peer *model.Peer) error {
