@@ -29,7 +29,13 @@ func NewConcensus(conf Config, preference model.DataType) (*Consensus, error) {
 	return consensus, nil
 }
 
-func (c *Consensus) Run(ctx context.Context, setDataCallback func(model.DataType) error, getKRandomBlock func(int) ([]model.DataType, error)) error {
+// Run consensus algorithm
+// Read the doc: https://github.com/ava-labs/mastering-avalanche/blob/main/chapter_09.md
+func (c *Consensus) Run(
+	ctx context.Context,
+	setDataCallback func(model.DataType) error,
+	getKRandomBlock func(int) ([]model.DataType, error),
+) error {
 	if c.isRunning {
 		return errors.New("Consensus is running")
 	}

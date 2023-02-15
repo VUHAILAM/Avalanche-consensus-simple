@@ -76,7 +76,7 @@ func SetupNode(wg *sync.WaitGroup, sigs chan os.Signal, i int, discovery *p2pnet
 		return
 	}
 	time.Sleep(1 * time.Second)
-
+	// Random init data for blockchain
 	for j := 0; j < conf.NumberOfBlock; j++ {
 		r := rand.Intn(int(float32(2) * 1.5))
 		block := &chain.Block{}
@@ -87,16 +87,20 @@ func SetupNode(wg *sync.WaitGroup, sigs chan os.Signal, i int, discovery *p2pnet
 		}
 		node.Add(block)
 	}
+	//Get data before sync
 	beforeBlockChainState := ""
 	for _, b := range node.Blocks {
 		beforeBlockChainState += fmt.Sprintf("%d ", int(b.Data))
 	}
 	Logger.Infof("Before sync, data of node: %d is %s", i, beforeBlockChainState)
+
 	err = node.Sync(ctx)
 	if err != nil {
 		Logger.Fatal(err)
 		return
 	}
+
+	// Get data after sync
 	blockChainState := ""
 	for _, b := range node.Blocks {
 		blockChainState += fmt.Sprintf("%d ", int(b.Data))

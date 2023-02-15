@@ -13,7 +13,7 @@ import (
 
 const (
 	DiscoveryHost = "127.0.0.1"
-	DiscoveryPort = 80
+	DiscoveryPort = 8888
 )
 
 type Discovery struct {

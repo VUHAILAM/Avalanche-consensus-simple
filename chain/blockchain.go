@@ -8,6 +8,8 @@ import (
 	"errors"
 	"math/rand"
 	"sync"
+
+	"github.com/sirupsen/logrus"
 )
 
 type Chain interface {
@@ -26,10 +28,10 @@ type Blockchain struct {
 	mu            sync.Mutex
 }
 
-func InitBlockchain(ctx context.Context, p2pConfig p2pnetworking.Config, snowballConf consensus.Config, discovery *p2pnetworking.Discovery) (*Blockchain, error) {
+func InitBlockchain(ctx context.Context, p2pConfig p2pnetworking.Config, consensusConf consensus.Config, discovery *p2pnetworking.Discovery) (*Blockchain, error) {
 	blockchain := &Blockchain{
 		P2pConfig:     p2pConfig,
-		SnowbalConfig: snowballConf,
+		SnowbalConfig: consensusConf,
 	}
 	blockchain.Blocks = make([]*Block, 0)
 
@@ -115,7 +117,7 @@ func (b *Blockchain) GetDataFromKRandomBlock(ctx context.Context, index int, k i
 		}
 		preference, err := b.GetBlockDataFromPeer(ctx, peers[i], index)
 		if err != nil {
-			// add debug log
+			logrus.Error(err)
 			continue
 		}
 
