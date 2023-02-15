@@ -9,6 +9,12 @@ docker compose up
 - GET    /api/v1/health: Get status of all peer in discovery
 - POST   /api/v1/create: Create a node
 
+## Folder structure
+- api: implement application layer
+- cmd: file main and pre-setup chain
+- consensus: handle algorithm logic
+- p2pnetworking: handle network and routers
+
 ## ToDo:
 - Add more tests
 - Implement chain using DAGs
